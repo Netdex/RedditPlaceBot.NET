@@ -69,16 +69,9 @@ namespace RPlaceBot
                     {
                         double time = TimeRequired(quant, x, y);
                         if (time == 0)
-                        {
                             for (int dx = 0; dx < quant.GetLength(0); dx++)
-                            {
                                 for (int dy = 0; dy < quant.GetLength(1); dy++)
-                                {
                                     CurrentPreview[x + dx, y + dy] = -1;
-                                }
-                            }
-
-                        }
                     }
                 }
                 int mx = 0, my = 0;
@@ -125,15 +118,9 @@ namespace RPlaceBot
 
                         List<Tuple<int, int>> incorrect = new List<Tuple<int, int>>();
                         for (int y = 0; y < quant.GetLength(1); y++)
-                        {
                             for (int x = 0; x < quant.GetLength(0); x++)
-                            {
                                 if (quant[x, y] != -1 && quant[x, y] != CurrentPreview[imgX + x, imgY + y])
-                                {
                                     incorrect.Add(new Tuple<int, int>(x, y));
-                                }
-                            }
-                        }
                         int minX = -1, minY = -1;
                         int centerX = quant.GetLength(0) / 2, centerY = quant.GetLength(1) / 2;
                         int manhattan = int.MaxValue;
@@ -159,8 +146,8 @@ namespace RPlaceBot
                             else
                             {
                                 C.WriteLine($"`i {index}: Drew pixel at ({imgX + minX},{imgY + minY})!");
+                                Cooldown = wait / 60.0;
                             }
-                            Cooldown = wait / 60.0;
                         }
                         C.WriteLine($"`i {index}: Waiting {wait} seconds");
                         Thread.Sleep(wait * 1000 + 1000);
