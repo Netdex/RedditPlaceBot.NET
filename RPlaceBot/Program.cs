@@ -49,7 +49,7 @@ namespace RPlaceBot
             C.WriteLine("Define image path:");
             string imgPath = Console.ReadLine();
             image = new Image<Bgra, byte>(imgPath);
-            
+
 
             C.WriteLine("`i The image you provided will look something like this:");
             var quant = ImageConvert.QuantifyImage(image);
@@ -77,7 +77,7 @@ namespace RPlaceBot
                                     CurrentPreview[x + dx, y + dy] = -1;
                                 }
                             }
-                            
+
                         }
                     }
                 }
@@ -85,7 +85,7 @@ namespace RPlaceBot
                 double mt = double.MaxValue;
                 for (int y = 0; y < 1000 - quant.GetLength(1); y++)
                 {
-                    for(int x = 0; x < 1000 - quant.GetLength(0); x++)
+                    for (int x = 0; x < 1000 - quant.GetLength(0); x++)
                     {
                         double time = TimeRequired(quant, x, y);
                         if (time < mt && time != 0)
@@ -110,7 +110,7 @@ namespace RPlaceBot
             ImageConvert.QuantifyPrint(CurrentPreview, imgX, imgY, quant.GetLength(0), quant.GetLength(1));
             C.WriteLine("`i Press any key to continue...");
             Console.ReadKey();
-            
+
             Thread[] Executors = new Thread[Accounts.Length];
             for (int i = 0; i < Accounts.Length; i++)
             {
@@ -122,30 +122,46 @@ namespace RPlaceBot
                     while (Running)
                     {
                         CurrentPreview = PlaceRequest.GetBoardState(account);
-                        int wait = 45;
 
+                        List<Tuple<int, int>> incorrect = new List<Tuple<int, int>>();
                         for (int y = 0; y < quant.GetLength(1); y++)
                         {
                             for (int x = 0; x < quant.GetLength(0); x++)
                             {
                                 if (quant[x, y] != -1 && quant[x, y] != CurrentPreview[imgX + x, imgY + y])
                                 {
-                                    wait = PlaceRequest.Draw(account, imgX + x, imgY + y, quant[x, y]);
-                                    if (wait < 0)
-                                    {
-                                        wait *= -1;
-                                        C.WriteLine($"`i {index}: Could not draw pixel at ({imgX + x},{imgY + y})!");
-                                    }
-                                    else
-                                    {
-                                        C.WriteLine($"`i {index}: Drew pixel at ({imgX + x},{imgY + y})!");
-                                    }
-                                    Cooldown = wait / 60.0;
-                                    goto pixel_drawn;
+                                    incorrect.Add(new Tuple<int, int>(x, y));
                                 }
                             }
                         }
-                        pixel_drawn:
+                        int minX = -1, minY = -1;
+                        int centerX = quant.GetLength(0) / 2, centerY = quant.GetLength(1) / 2;
+                        int manhattan = int.MaxValue;
+                        foreach (var tup in incorrect)
+                        {
+                            int m = Math.Abs(centerX - tup.Item1) + Math.Abs(centerY - tup.Item2);
+                            if (m < manhattan)
+                            {
+                                manhattan = m;
+                                minX = tup.Item1;
+                                minY = tup.Item2;
+                            }
+                        }
+                        int wait = 45;
+                        if (minX != -1 && minY != -1)
+                        {
+                            wait = PlaceRequest.Draw(account, imgX + minX, imgY + minY, quant[minX, minY]);
+                            if (wait < 0)
+                            {
+                                wait *= -1;
+                                C.WriteLine($"`i {index}: Could not draw pixel at ({imgX + minX},{imgY + minY})!");
+                            }
+                            else
+                            {
+                                C.WriteLine($"`i {index}: Drew pixel at ({imgX + minX},{imgY + minY})!");
+                            }
+                            Cooldown = wait / 60.0;
+                        }
                         C.WriteLine($"`i {index}: Waiting {wait} seconds");
                         Thread.Sleep(wait * 1000 + 1000);
                     }
@@ -159,7 +175,7 @@ namespace RPlaceBot
                 {
                     double time = TimeRequired(quant, imgX, imgY);
                     C.WriteLine($"`i Estimated time required: {time} min(s)");
-                    Thread.Sleep((int) (Cooldown * 60 * 1000));
+                    Thread.Sleep((int)(Cooldown * 60 * 1000));
                     C.WriteLine("`i STATE_WATCH: Current state:");
                     ImageConvert.QuantifyPrint(CurrentPreview, imgX, imgY, quant.GetLength(0), quant.GetLength(1));
                 }
